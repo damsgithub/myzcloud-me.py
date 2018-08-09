@@ -24,7 +24,7 @@ import argparse
 from multiprocessing import Pool
 from bs4 import BeautifulSoup
 
-version = 5.2
+version = 5.3
 useragent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:61.0) Gecko/20100101 Firefox/61.0"
 covers_name = "cover.jpg"
 
@@ -164,7 +164,7 @@ def open_url(url, socks_proxy, socks_port, timeout, data, range_header):
 
     while True:
         try:
-            print("open_url: %s" % url)
+            #print("open_url: %s" % url)
             req = urllib.request.Request(
                 url,
                 data)
@@ -217,9 +217,13 @@ def prepare_album_dir(page_content, base_path, debug):
     title = ""
     year = ""
 
-    album_infos_re = re.compile('<span itemprop="name">(.+?)</span>\r?\n?<meta content="3" itemprop="position"/>\r?\n?</a>\r?\n?</li>\r?\n?<li class="breadcrumb-item active">(.+?)</li>')
+    album_infos_re = re.compile('<span itemprop="name">(.+?)</span>\r?\n?'
+                                '<meta content="3" itemprop="position"/>\r?\n?'
+                                '</a>\r?\n?'
+                                '</li>\r?\n?'
+                                '<li class="breadcrumb-item active">(.+?)</li>')
     album_infos = album_infos_re.search(page_content)
-	
+
     print("")
     if not album_infos:
         artist = input("Unable to get ARTIST NAME. Please enter here: ")
@@ -232,7 +236,9 @@ def prepare_album_dir(page_content, base_path, debug):
     print("Album: %s" % title)
 
     # Get the year if it is available
-    album_infos_re = re.compile('<time datetime=".+?" itemprop="datePublished"></time>\r?\n?<a href="/albums/.+?">(.+?)</a> </li>\r?\n?<li>')
+    album_infos_re = re.compile('<time datetime=".+?" itemprop="datePublished"></time>\r?\n?'
+                                '<a href="(?:/en)?/albums/.+?">(.+?)</a> </li>\r?\n?'
+                                '<li>')
     album_infos = album_infos_re.search(page_content)
 
     if album_infos and album_infos.group(1):
@@ -275,7 +281,7 @@ def download_file(url, file_name, debug, socks_proxy, socks_port, timeout):
             dlded_size = 0
 
         u = open_url(url, socks_proxy, socks_port, timeout, data=None, range_header=None)
-        print("url: %s" % url)
+        #print("url: %s" % url)
         if not u:
             return -1
 
@@ -319,10 +325,9 @@ def download_file(url, file_name, debug, socks_proxy, socks_port, timeout):
             else:
                 color_message("** Range/partial download is not supported by server, restarting download at beginning **", "lightyellow")
                 dlded_size = 0
-    
         elif (dlded_size == real_size):
             # file already completed, skipped
-            color_message("%s" % dl_status(file_name, dlded_size, real_size), "lightgreen")
+            color_message("%s (skipped)" % dl_status(file_name, dlded_size, real_size), "lightgreen")
             u.close()
             return
         elif (dlded_size > real_size):
@@ -383,36 +388,40 @@ def download_file(url, file_name, debug, socks_proxy, socks_port, timeout):
 
 
 def download_song(params):
-    (url, debug, socks_proxy, socks_port, timeout) = params
+    (num_and_url, debug, socks_proxy, socks_port, timeout) = params
     process_id = os.getpid()
+
+    m = re.match(r"^(\d+)-(.+)", num_and_url)
+    tracknum = m.group(1)
+    url = m.group(2)
 
     while True: # continue until we have the song
         try:
             if debug: print("%s: downloading song from %s" % (process_id, url))
             file_name = ""
             file_url = ""
-			
+
             page_soup = get_page_soup(url, None, debug, socks_proxy, socks_port, timeout)
             if not page_soup: 
                 if debug: print("** %s: Unable to get song's page soup, retrying **" % process_id, file=sys.stderr)
                 continue
-        
-            # get the filename and url
+
+            # get the filename and file url
             for link in page_soup.find_all('a', href=True, class_="no-ajaxy", itemprop="audio", limit=1):
-                song_infos_re = re.compile('<a .+?download="(.+?)" href="(.+?)" .+?><span><i class="zmdi zmdi-cloud-download zmdi-hc-4x"></i></span></a>')
+                song_infos_re = re.compile('<a .+?download="(.+?)" href="(.+?)" .+?><span>'
+                                           '<i class="zmdi zmdi-cloud-download zmdi-hc-4x"></i></span></a>')
                 song_infos = song_infos_re.search(str(link))
-                file_name = song_infos.group(1)
-                file_url = song_infos.group(2)
-                print("IN")
                 break
 
-            if file_name != "":
+            if song_infos.group(1) != "":
+                file_name = tracknum +'-' + song_infos.group(1)
                 if debug: print("%s: got_filename: %s" % (process_id, file_name))
             else:
                 color_message("** %s: Cannot find filename for: %s , retrying **" % (process_id, url), "lightyellow")
                 continue
 
-            if file_url != "":
+            if song_infos.group(2) != "":
+                file_url = song_infos.group(2)
                 if debug: print("%s: got_fileurl: %s" % (process_id, file_url))
                 # prepend base url if necessary
                 if re.match(r'^/', file_url):
@@ -421,10 +430,6 @@ def download_song(params):
                 color_message("** %s: Cannot find file url for: %s , retrying **" % (process_id, url), "lightyellow")
                 continue
 
-			# get the song position in album
-			# TODO
-				
-        
             # download song      
             ret = download_file(file_url, file_name, debug, socks_proxy, socks_port, timeout)
             if ret == -1:
@@ -463,15 +468,31 @@ def download_album(url, base_path, debug, socks_proxy, socks_port, timeout, nb_c
 
     # create list of album's songs
     songs_links = []
-    href_regexp = re.compile('/song/')
-	
-    for link in page_soup.find_all('a', href=True, title=True, class_="dl-song"):
+    href_regexp = re.compile(r'/song/')
+    tracknum = 0
 
-        if href_regexp.match(link['href']):
+    for link in page_soup.find_all('a', href=True, title=True, class_="dl-song"):
+        if href_regexp.search(link['href']):
+            # search track number
+            tracknum_infos_re = re.compile('<div class="playlist__position">\r?\n?'
+                                     '(\d+)\r?\n?'
+                                     '</div>\r?\n?'
+                                     '<div class="playlist__details">\r?\n?'
+                                     '<div class="playlist__heading ">\r?\n?'
+                                     '<a class="strong" href="' + link['href'] + '">', re.I)
+            tracknum_infos = tracknum_infos_re.search(page_content)
+            if tracknum_infos:
+                tracknum = tracknum_infos.group(1)
+            else:
+                color_message("** Unable to get track number **", "lightyellow")
+                tracknum = 0
+
             # prepend base url if necessary
             if re.match(r'^/', link['href']):
                 link['href'] = get_base_url(url, debug) + link['href']
-            songs_links.append(link['href'])
+
+            # add song url and number in array
+            songs_links.append(tracknum + '-' + link['href'])
 
     if not songs_links:
         color_message("** Unable to detect any song links, skipping this album/url **", "lightred")
@@ -480,7 +501,7 @@ def download_album(url, base_path, debug, socks_proxy, socks_port, timeout, nb_c
         pool = Pool(processes=nb_conn)
 
         # pool.map accepts only one argument for the function call, so me must aggregate all in one
-        params = [(url, debug, socks_proxy, socks_port, timeout) for url in songs_links]
+        params = [(num_and_url, debug, socks_proxy, socks_port, timeout) for num_and_url in songs_links]
         try:
             pool.map(download_song, params)
             pool.close()
@@ -505,7 +526,7 @@ def download_artist(url, base_path, debug, socks_proxy, socks_port, timeout, nb_
 
     albums_links = []
     for link in page_soup.find_all('a', href=True):
-        if re.match(r'/album/.*', link['href']):
+        if re.search(r'/album/.*', link['href']):
             # most of album's links appear 2 times, we need to de-duplicate.
             if link['href'] not in albums_links:
                 albums_links.append(link['href'])
@@ -515,7 +536,7 @@ def download_artist(url, base_path, debug, socks_proxy, socks_port, timeout, nb_
                            debug, socks_proxy, socks_port, timeout, nb_conn)
     print("")
     print("ARTIST DOWNLOAD FINISHED")
- 
+
 
 def main():
     global version
