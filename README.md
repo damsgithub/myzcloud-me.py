@@ -1,2 +1,102 @@
 # myzcloud-me.py
-myzcloud.me grabber
+Python 3 script to download on myzcloud.me
+
+Features included:
+* Cover downloading
+* Windows/Linux support
+* Resume incomplete songs and albums downloads
+* Creation of directory with "Artist - Album (year)" name.
+* Multiple simultaneous downloads to download faster
+* Able to download all albums from an artist
+* Socks proxy support
+* Colored output
+
+TODO:
+* detect deleted tracks on myzcloud.me while downloading album
+* make some kind of progress bar (difficult because of the simultaneous downloads).
+* streaming mode?
+
+Install:
+* install python 3 (tested with 3.6.2) if not already present on your distrib. For Windows, see here https://www.python.org/downloads/windows/
+* install required modules: BeautifulSoup4 and Pysocks. Use your standard repo for linux, for Windows do in an administrator command prompt
+```sh
+python -m pip install BeautifulSoup4 Pysocks
+```
+
+Usage:
+* Just give it an album or artist url from http://musicmp3spb.org/ as argument, see below:
+
+```
+------------------------------------------------------------------------------------------------------------------
+################## To download an album, give it an url with '/album/' in it #####################################
+------------------------------------------------------------------------------------------------------------------
+user@computer:/tmp$ %s [-p /path] https://myzcloud.me/album/2431310/carpe-diem-france-circonvolutions-2015
+** We will try to use 3 simultaneous downloads, progress will be shown **
+** after each completed file but not necessarily in album's order. **
+
+Artist: Carpe Diem
+Album: Circonvolutions
+Year: 2015
+cover.jpg                                                 00.07 of 00.07 MB [100%%]
+02-naissance.mp3                                          07.83 of 07.83 MB [100%%]
+01-couleurs.mp3                                           49.59 of 49.59 MB [100%%]
+[...]
+
+It will create an "Artist - Album" directory in the path given as argument (or else in current
+ directory if not given), and download all songs and covers available on that page.
+
+
+------------------------------------------------------------------------------------------------------------------
+################## To download all albums from an artist, give it an url with '/artist/' in it ###################
+------------------------------------------------------------------------------------------------------------------
+
+user@computer:/tmp$ %s [-p /path] https://myzcloud.me/artist/1105522/carpe-diem-france/albums
+** We will try to use 3 simultaneous downloads, progress will be shown **
+** after each completed file but not necessarily in album's order. **
+** Warning: we are going to download all albums from this artist! **
+
+Artist: Carpe Diem
+Album: Cueille Le Jour
+Year: 1976
+cover.jpg                                                 00.07 of 00.07 MB [100%%]
+02-naissance.mp3                                          07.83 of 07.83 MB [100%%]
+01-couleurs.mp3                                           49.59 of 49.59 MB [100%%]
+[...]
+
+Artist: Carpe Diem
+Album: En Regardant Passer Le Temps
+Year: 1975
+cover.jpg                                                 00.08 of 00.08 MB [100%%]
+cover1.jpg                                                00.03 of 00.03 MB [100%%]
+01-voyage_du_non-retour.mp3                               08.92 of 08.92 MB [100%%]
+02-reincarnation.mp3                                      29.60 of 29.60 MB [100%%]
+[...]
+
+
+It will iterate on all albums of this artist.
+
+
+------------------------------------------------------------------------------------------------------------------
+################# Command line help ##############################################################################
+------------------------------------------------------------------------------------------------------------------
+
+For more info, see https://github.com/damsgithub/myzcloud-me.py
+
+
+positional arguments:
+  url                   URL of album or artist page
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -d {0,1,2}, --debug {0,1,2}
+                        Debug verbosity: 0, 1, 2
+  -s SOCKS, --socks SOCKS
+                        Socks proxy: "address:port" without "http://"
+  -t TIMEOUT, --timeout TIMEOUT
+                        Timeout for HTTP connections in seconds
+  -n NB_CONN, --nb_conn NB_CONN
+                        Number of simultaneous downloads (max 3 or 4 for tempfile.ru)
+  -p PATH, --path PATH  Base directory in which album(s) will be downloaded. Defaults to current directory.
+  -v, --version         show program's version number and exit
+
+```
