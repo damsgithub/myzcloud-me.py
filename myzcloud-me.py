@@ -285,7 +285,6 @@ def download_file(url, file_name, debug, socks_proxy, socks_port, timeout):
         if not u:
             return -1
 
-
         i = 0
         while (i < 5):
             try:
@@ -307,7 +306,6 @@ def download_file(url, file_name, debug, socks_proxy, socks_port, timeout):
                     if debug: print("%s problem while getting content-length: %s, retrying" 
                                     % (process_id, str(e)), file=sys.stderr)
                     continue
- 
 
         # find where to start the file download (continue or start at beginning)
         if (0 < dlded_size < real_size):
@@ -335,14 +333,13 @@ def download_file(url, file_name, debug, socks_proxy, socks_port, timeout):
             color_message("** The real size of %s could not be found or an other problem occured, retrying **" % file_name, "lightyellow")
             u.close()
             return -1
-    
 
         # append or truncate
         if partial_dl:
             f = open(file_name, 'ab+')
         else:
             f = open(file_name, 'wb+')
-    
+
         # get the file
         block_sz = 8192
         #spin = spinning_wheel()
@@ -350,10 +347,10 @@ def download_file(url, file_name, debug, socks_proxy, socks_port, timeout):
             buffer = u.read(block_sz)
             if not buffer:
                 break
-    
+
             dlded_size += len(buffer)
             f.write(buffer)
-    
+
             # show progress
             #sys.stdout.write(next(spin))
             #sys.stdout.flush()
@@ -373,7 +370,7 @@ def download_file(url, file_name, debug, socks_proxy, socks_port, timeout):
             u.close()
             f.close()
             return -1
-    
+
         #sys.stdout.write('\n')
         u.close()
         f.close()
@@ -470,21 +467,23 @@ def download_album(url, base_path, debug, socks_proxy, socks_port, timeout, nb_c
     songs_links = []
     href_regexp = re.compile(r'/song/')
     tracknum = 0
+    deleted_track_flag = 0
 
     for link in page_soup.find_all('a', href=True, title=True, class_="dl-song"):
         if href_regexp.search(link['href']):
             # search track number
             tracknum_infos_re = re.compile('<div class="playlist__position">\r?\n?'
                                      '(\d+)\r?\n?'
-                                     '</div>\r?\n?'
+                                     '(?:\s)*</div>\r?\n?'
                                      '<div class="playlist__details">\r?\n?'
-                                     '<div class="playlist__heading ">\r?\n?'
+                                     '<div class="playlist__heading(?:\s)">\r?\n?'
                                      '<a class="strong" href="' + link['href'] + '">', re.I)
             tracknum_infos = tracknum_infos_re.search(page_content)
             if tracknum_infos:
                 tracknum = tracknum_infos.group(1)
             else:
-                color_message("** Unable to get track number **", "lightyellow")
+                color_message("** Unable to get track number for %s **" % link['href'], "lightyellow")
+                #print(page_content)
                 tracknum = 0
 
             # prepend base url if necessary
@@ -492,7 +491,19 @@ def download_album(url, base_path, debug, socks_proxy, socks_port, timeout, nb_c
                 link['href'] = get_base_url(url, debug) + link['href']
 
             # add song url and number in array
-            songs_links.append(tracknum + '-' + link['href'])
+            songs_links.append(str(tracknum) + '-' + link['href'])
+
+    deleted_track_re = re.compile(r'<div class="playlist__position">\r?\n?'
+                                     '(\d+)\r?\n?'
+                                     '(?:\s)*</div>\r?\n?'
+                                     '<div class="playlist__details">\r?\n?'
+                                     '<div class="playlist__heading(?:\s)">\r?\n?'
+                                     '<span>(.+?)</span> <span class=[\'"]badge badge-pill badge-danger[\'"]>'
+                                     '(?:\[Deleted|Удален по требованию правообладателя\])</span>', re.I)
+    #deleted_track = deleted_track_re.search(page_content)
+    for (tracknum, trackname) in re.findall(deleted_track_re, page_content):
+        color_message("** The track number %s (%s) is absent from website **" % (tracknum, trackname), "lightyellow")
+        deleted_track_flag = 1
 
     if not songs_links:
         color_message("** Unable to detect any song links, skipping this album/url **", "lightred")
@@ -513,8 +524,8 @@ def download_album(url, base_path, debug, socks_proxy, socks_port, timeout, nb_c
             sys.exit(1)
 
     os.chdir('..')
-    print("ALBUM DOWNLOAD FINISHED")
-
+    if not deleted_track_flag: color_message("** ALBUM DOWNLOAD FINISHED **", "lightgreen")
+    else: color_message("** ALBUM DOWNLOAD INCOMPLETE, MISSING TRACKS ON WEBSITE **", "lightred")
 
 def download_artist(url, base_path, debug, socks_proxy, socks_port, timeout, nb_conn):
     page_soup = get_page_soup(url, str.encode(''), debug, socks_proxy, socks_port, timeout)
