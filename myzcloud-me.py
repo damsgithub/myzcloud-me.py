@@ -1,9 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*- 
 
-# Copyright (C) 2017: "Siergiej Riaguzow <xor256@gmx.com>" for the original version
-# (https://github.com/xor512/musicmp3spb.org), and "Dams" for this fork
-# (https://github.com/damsgithub/myzcloud-me.py).
 # This work is free. You can redistribute it and/or modify it under the
 # terms of the Do What The Fuck You Want To Public License, Version 2,
 # as published by Sam Hocevar.  See the COPYING file for more details.
@@ -499,6 +496,7 @@ def download_album(url, base_path, debug, socks_proxy, socks_port, timeout, nb_c
         logcontent.write(page_content)
         logcontent.close()
 
+    # search for absent/deleted tracks from the website.
     deleted_track_re = re.compile(r'<div class="playlist__position">\r?\n?'
                                      '(?:\s)*(\d+)\r?\n?'
                                      '(?:\s)*</div>\r?\n?'
@@ -507,7 +505,7 @@ def download_album(url, base_path, debug, socks_proxy, socks_port, timeout, nb_c
                                      '(?:<a(?: class="strong")? href=".+?"(?: class="strong")?>)?'
                                      '<span>(.+?)</span> <span class=[\'"]badge badge-pill badge-danger[\'"]>'
                                      '\[(?:Deleted|Удален по требованию правообладателя)\]</span>', re.I)
-    #deleted_track = deleted_track_re.search(page_content)
+
     for deleted_track in re.findall(deleted_track_re, page_content):
         tracknum = deleted_track[0]
         trackname = deleted_track[1]
@@ -548,7 +546,7 @@ def download_artist(url, base_path, debug, socks_proxy, socks_port, timeout, nb_
     albums_links = []
     for link in page_soup.find_all('a', href=True):
         if re.search(r'/album/.*', link['href']):
-            # most of album's links appear 2 times, we need to de-duplicate.
+            # most of albums' links appear 2 times, we need to de-duplicate.
             if link['href'] not in albums_links:
                 albums_links.append(link['href'])
 
