@@ -30,7 +30,7 @@ Usage:
 ------------------------------------------------------------------------------------------------------------------
 ################## To download an album, give it an url with '/album/' in it #####################################
 ------------------------------------------------------------------------------------------------------------------
-user@computer:/tmp$ %s [-p /path] https://myzcloud.me/album/2431310/carpe-diem-france-circonvolutions-2015
+user@computer:/tmp$ myzcloud-me.py [-p /path] https://myzcloud.me/album/2431310/carpe-diem-france-circonvolutions-2015
 ** We will try to use 3 simultaneous downloads, progress will be shown **
 ** after each completed file but not necessarily in album's order. **
 
@@ -50,7 +50,7 @@ It will create an "Artist - Album" directory in the path given as argument (or e
 ################## To download all albums from an artist, give it an url with '/artist/' in it ###################
 ------------------------------------------------------------------------------------------------------------------
 
-user@computer:/tmp$ %s [-p /path] https://myzcloud.me/artist/1105522/carpe-diem-france/albums
+user@computer:/tmp$ myzcloud-me.py [-p /path] https://myzcloud.me/artist/1105522/carpe-diem-france/albums
 ** We will try to use 3 simultaneous downloads, progress will be shown **
 ** after each completed file but not necessarily in album's order. **
 ** Warning: we are going to download all albums from this artist! **
