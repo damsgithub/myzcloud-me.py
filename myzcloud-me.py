@@ -492,7 +492,7 @@ def download_album(url, base_path, debug, socks_proxy, socks_port, timeout, nb_c
             # add song url and number in array
             songs_links.append(str(tracknum) + '-' + link['href'])
 
-    if debug:
+    if debug > 1:
         timestr = time.strftime("%Y%m%d-%H%M%S")
         mylogname = "myzcloudlog-" + timestr + ".log"
         logcontent = open(mylogname, "w", encoding='utf-8')
