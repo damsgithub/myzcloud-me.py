@@ -12,7 +12,6 @@ Features included:
 * Colored output
 
 TODO:
-* detect deleted tracks on myzcloud.me while downloading album
 * make some kind of progress bar (difficult because of the simultaneous downloads).
 * streaming mode?
 
