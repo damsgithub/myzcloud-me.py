@@ -24,7 +24,7 @@ python -m pip install BeautifulSoup4 Pysocks
 ```
 
 Usage:
-* Just give it an album or artist url from http://musicmp3spb.org/ as argument, see below:
+* Just give it an album or artist url from https://myzcloud.me as argument, see below:
 
 ```
 ------------------------------------------------------------------------------------------------------------------
