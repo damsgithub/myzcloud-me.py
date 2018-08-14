@@ -286,13 +286,11 @@ def download_file(url, file_name, debug, socks_proxy, socks_port, timeout):
         while (i < 5):
             try:
                 real_size = int(u.info()['content-length'])
-                if real_size <= 8192:
+                if real_size <= 1024:
                    # we got served an "Exceed the download limit" (Превышение лимита скачивания) page, 
-                   # retry without incrementing counter
-                   continue
-                else:
-                   # we got the size, exit this loop
-                   break
+                   # retry without incrementing counter (for musicmp3spb)
+                   color_message("** File size too small (<1024), might be an error, please verify manually **", "lightyellow")
+                break
             except Exception as e:
                 if (i == 4):
                     color_message("** Unable to get the real size of %s from the server because: %s. **" 
@@ -478,6 +476,7 @@ def download_album(url, base_path, debug, socks_proxy, socks_port, timeout, nb_c
             tracknum_infos = tracknum_infos_re.search(page_content)
             if tracknum_infos:
                 tracknum = tracknum_infos.group(1)
+                tracknum = str(tracknum).zfill(2)
             else:
                 color_message("** Unable to get track number for %s **" % link['href'], "lightyellow")
                 tracknum = 0
