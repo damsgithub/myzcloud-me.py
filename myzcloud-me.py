@@ -468,11 +468,11 @@ def download_album(url, base_path, debug, socks_proxy, socks_port, timeout, nb_c
         if href_regexp.search(link['href']):
             # search track number
             tracknum_infos_re = re.compile('<div class="playlist__position">\r?\n?'
-                                     '(\d+)\r?\n?'
+                                     '(?:\s)*(\d+)\r?\n?'
                                      '(?:\s)*</div>\r?\n?'
-                                     '<div class="playlist__details">\r?\n?'
-                                     '<div class="playlist__heading(?:\s)">\r?\n?'
-                                     '<a class="strong" href="' + link['href'] + '">', re.I)
+                                     '(?:\s)*<div class="playlist__details">\r?\n?'
+                                     '(?:\s)*<div class="playlist__heading(?:\s)">\r?\n?'
+                                     '(?:\s)*<a class="strong" href="' + link['href'] + '">', re.I)
             tracknum_infos = tracknum_infos_re.search(page_content)
             if tracknum_infos:
                 tracknum = tracknum_infos.group(1)
@@ -600,8 +600,8 @@ def main():
         socks_port = int(socks_port)
 
     try:
-        print("** We will try to use %s simultaneous downloads, progress will be shown **" % nb_conn)
-        print("** after each completed file but not necessarily in album's order. **")
+        print("** We will try to use %s simultaneous downloads, progress will be shown" % nb_conn)
+        print("   after each completed file but not necessarily in album's order. **")
 
         # modification of global variables do not work correctly under windows with multiprocessing,
         # so I have to pass all these parameters to these functions...
