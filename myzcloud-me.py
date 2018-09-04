@@ -139,7 +139,7 @@ def download_cover(page_content, url, debug, socks_proxy, socks_port, timeout):
 	
     cover_url = cover_url_match.group(1)
 	
-    if debug > 0: print ("cover: %s" % cover_url)
+    if debug: print ("cover: %s" % cover_url)
 	
     if not cover_url:
         color_message("** No cover found for this album **", "lightyellow")
@@ -150,7 +150,7 @@ def get_base_url(url, debug):
     # get website base address to preprend it to images, songs and albums relative urls'
     base_url = url.split('//', 1)
     base_url = base_url[0] + '//' + base_url[1].split('/', 1)[0]
-    if debug > 1: print("base_url: %s" % base_url)
+    #if debug > 1: print("base_url: %s" % base_url)
     return base_url
 
 
@@ -170,9 +170,6 @@ def open_url(url, socks_proxy, socks_port, timeout, data, range_header):
 
             u = urllib.request.urlopen(req, timeout=timeout)
             redirect = u.geturl()
-            if re.search(r'/404.*', redirect):
-                color_message("** Page not found (404), aborting on url: %s **" % url, "lightred")
-                u = None
         except (urllib.error.HTTPError) as e:
             color_message("** Connection problem 1 (%s), reconnecting **" % e.reason, "lightyellow")
             time.sleep(random.randint(2,5))
@@ -203,7 +200,7 @@ def get_page_soup(url, data, debug, socks_proxy, socks_port, timeout):
     if not page:
         return None
     page_soup = BeautifulSoup(page, "html.parser", from_encoding=page.info().get_param('charset'))
-    if debug > 1: print("page_soup: %s" % page_soup)
+    #if debug > 1: print("page_soup: %s" % page_soup)
     page.close()
     return page_soup
 
@@ -406,7 +403,7 @@ def download_song(params):
                 break
 
             if song_infos.group(1) != "":
-                file_name = tracknum +'-' + song_infos.group(1)
+                file_name = tracknum +'-' + sanitize_path(song_infos.group(1))
                 if debug: print("%s: got_filename: %s" % (process_id, file_name))
             else:
                 color_message("** %s: Cannot find filename for: %s , retrying **" % (process_id, url), "lightyellow")
@@ -445,7 +442,7 @@ def download_song(params):
 def download_album(url, base_path, debug, socks_proxy, socks_port, timeout, nb_conn):
     page_soup = get_page_soup(url, None, debug, socks_proxy, socks_port, timeout)
     if not page_soup:
-        if debug: print("** Unable to get album's page soup **", file=sys.stderr)
+        color_message("** Unable to get album's page soup **", "lightred")
         return
     page_content = str(page_soup)
 
